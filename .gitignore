@@ -1,3 +1,6 @@
+html/mapbox_api_key
+.env
+
 ############## generic files to ignore #######
 *~
 *.lock
