@@ -1,112 +1,116 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Heatmaps</title>
-        <link rel="stylesheet" type="text/css" href="style.css" />
-        <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>
-        <script>
-            // Fetch the API key and dynamically load it
-            $(document).ready(function(){
-                $.get("google_maps_api_key", function(data){
-                    var API_KEY = data;
-                    var s = document.createElement("script");
-                    s.type = "text/javascript";
-                    s.src = "https://maps.googleapis.com/maps/api/js?key=" + API_KEY + "&libraries=visualization&callback=initMap";
-                    // Use any selector
-                    $("body").append(s);
-                })
+<head>
+    <meta charset='utf-8' />
+    <title>EXIF Heatmap</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v0.41.0/mapbox-gl.js"></script>
+    <link href="https://api.tiles.mapbox.com/mapbox-gl-js/v0.41.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+    </style>
+</head>
+<body>
+
+
+<div id='map'></div>
+
+<script>
+    $(document).ready(function() {
+        $.get("mapbox_token", function (data) {
+            mapboxgl.accessToken = data;
+            var map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/dark-v9',
+                center: [-120, 50],
+                zoom: 2
             });
-        </script>
-  </head>
 
-  <body>
-    <div id="floating-panel">
-      <button onclick="toggleHeatmap()">Toggle Heatmap</button>
-      <button onclick="changeOpacity()">Change opacity</button>
-    </div>
-    <div id="map"></div>
-    <script>
-        var points;
-        function getMeanLong(points){
-            var sum = 0;
-            for(var i=0; i < points.length; i++){
-                var currentLong = points[i][1];
-                sum += currentLong;
-            }
-            return sum/points.length;
-        };
+            map.on('load', function () {
+                // Add a geojson point source.
+                // Heatmap layers also work with a vector tile source.
+                map.addSource('exif', {
+                    "type": "geojson",
+                    "data": "exif.geojson"
+                });
 
-        function getMeanLat(points){
-            var sum = 0;
-            for(var i=0; i < points.length; i++){
-                var currentLat = points[i][0];
-                sum += currentLat;
-            }
-            return sum/points.length;
-        };
+                map.addLayer({
+                    "id": "exif-heat",
+                    "type": "heatmap",
+                    "source": "exif",
+                    "maxzoom": 9,
+                    "paint": {
+                        //Increase the heatmap weight based on frequency and property magnitude
+                        "heatmap-weight": {
+                            "property": "mag",
+                            "type": "exponential",
+                            "stops": [
+                                [0, 0],
+                                [6, 1]
+                            ]
+                        },
+                        //Increase the heatmap color weight weight by zoom level
+                        //heatmap-ntensity is a multiplier on top of heatmap-weight
+                        "heatmap-intensity": {
+                            "stops": [
+                                [0, 1],
+                                [9, 3]
+                            ]
+                        },
+                        //Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+                        //Begin color ramp at 0-stop with a 0-transparancy color
+                        //to create a blur-like effect.
+                        "heatmap-color": {
+                            "stops": [
+                                [0, "rgba(33,102,172,0)"],
+                                [0.2, "rgb(103,169,207)"],
+                                [0.4, "rgb(209,229,240)"],
+                                [0.6, "rgb(253,219,199)"],
+                                [0.8, "rgb(239,138,98)"],
+                                [1, "rgb(178,24,43)"]
+                            ]
+                        },
+                        //Adjust the heatmap radius by zoom level
+                        "heatmap-radius": {
+                            "stops": [
+                                [0, 2],
+                                [9, 20]
+                            ]
+                        },
+                        //Transition from heatmap to circle layer by zoom level
+                        "heatmap-opacity": {
+                            "default": 1,
+                            "stops": [
+                                [7, 1],
+                                [9, 0]
+                            ]
+                        },
+                    }
+                }, 'waterway-label');
 
-      var map, heatmap;
+                map.addLayer({
+                    "id": "exif-point",
+                    "type": "circle",
+                    "source": "exif",
+                    "minzoom": 7,
+                    "paint": {
+                        "circle-stroke-color": "white",
+                        "circle-stroke-width": 1,
+                        //Transition from heatmap to circle layer by zoom level
+                        "circle-opacity": {
+                            "stops": [
+                                [7, 0],
+                                [8, 1]
+                            ]
+                        }
+                    }
+                }, 'waterway-label');
+            });
+        });
+    });
+</script>
 
-      function initMap() {
-          $.getJSON( "exif.geojson", function( json ) {
-              points = [];
-              $.each(json.features, function(){
-                  var lat = $(this)[0].geometry.coordinates[1];
-                  var long = $(this)[0].geometry.coordinates[0];
-                  var point = [lat, long];
-                  points.push(point);
-              });
-              var meanLat = getMeanLat(points);
-              var meanLong = getMeanLong(points);
-
-              map = new google.maps.Map(document.getElementById('map'), {
-                  zoom: 8,
-                  center: {lat: meanLat, lng: meanLong},
-                  mapTypeId: 'satellite'
-              });
-
-              heatmap = new google.maps.visualization.HeatmapLayer({
-                  data: getPoints(),
-                  map: map,
-                  radius: 50,
-                  gradient: [
-                      'rgba(0, 255, 255, 0)',
-                      'rgba(0, 255, 255, 1)',
-                      'rgba(0, 191, 255, 1)',
-                      'rgba(0, 127, 255, 1)',
-                      'rgba(0, 63, 255, 1)',
-                      'rgba(0, 0, 255, 1)',
-                      'rgba(0, 0, 223, 1)',
-                      'rgba(0, 0, 191, 1)',
-                      'rgba(0, 0, 159, 1)',
-                      'rgba(0, 0, 127, 1)',
-                      'rgba(63, 0, 91, 1)',
-                      'rgba(127, 0, 63, 1)',
-                      'rgba(191, 0, 31, 1)',
-                      'rgba(255, 0, 0, 1)'
-                  ]
-              });
-          });
-      }
-
-      function toggleHeatmap() {
-        heatmap.setMap(heatmap.getMap() ? null : map);
-      }
-
-      function changeOpacity() {
-        heatmap.set('opacity', heatmap.get('opacity') ? null : 0.2);
-      }
-
-      function getPoints() {
-        var pointsArray = [];
-        for(var i=0; i < points.length; i++){
-            var currentPoint = new google.maps.LatLng(points[i][0], points[i][1]);
-            pointsArray.push(currentPoint);
-        }
-
-        return pointsArray;
-      }
-    </script>
-  </body>
+</body>
 </html>

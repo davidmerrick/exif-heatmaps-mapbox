@@ -1,7 +1,12 @@
-This is a set of scripts to streamline the process of creating a heatmap from geotagged images.
+Display EXIF data from your photos on a heatmap.
 
-## Todo
+# Getting started
 
-- This is currently a work-in-progress. I do have a working project [here](https://github.com/davidmerrick/exif-heatmaps) that uses Google Maps.
-- Simplify this project. Just have it serve up the geoJSON. Have a separate repo for pulling the EXIF data off the photos.
+1. Set up a [MapBox account](https://www.mapbox.com/) and login.
+2. Grab a MapBox token from [here](https://www.mapbox.com/studio/account/tokens/).
+3. Copy the `.env.example` file to `.env`, and paste in your MapBox token.
+4. Put your EXIF geoJSON in `html/exif.geojson`.
+5. Run `docker-compose build`.
+6. Run `docker-compose up`.
+7. Load [localhost:8080](http://localhost:8080) in your browser.
 
