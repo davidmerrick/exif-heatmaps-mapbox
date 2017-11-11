@@ -1,4 +1,5 @@
 html/mapbox_api_key
+html/exif.geojson
 .env
 
 ############## generic files to ignore #######

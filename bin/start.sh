@@ -2,7 +2,7 @@
 
 if [[ -z $MAPBOX_TOKEN ]]
 then
-    echo "ERROR: $MAPBOX_TOKEN is not set. Set this in your .env file."
+    echo "ERROR: \$MAPBOX_TOKEN is not set. Set this in your .env file."
     exit 1
 fi
 
