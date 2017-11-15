@@ -1,5 +1,6 @@
 var path = require('path');
 const Dotenv = require('dotenv-webpack');
+var webpack = require('webpack');
 
 module.exports = {
     entry: './src/index.js',
@@ -11,6 +12,7 @@ module.exports = {
         new Dotenv({
             path: '.env',
             systemvars: true
-        })
+        }),
+        new webpack.optimize.UglifyJsPlugin()
     ]
 };
