@@ -1,11 +1,16 @@
 var mapboxgl = require('mapbox-gl')
 
 mapboxgl.accessToken = process.env.MAPBOX_TOKEN;
+
+var MAP_CENTER_LAT = process.env.MAP_CENTER_LAT || -74.0060;
+var MAP_CENTER_LONG = process.env.MAP_CENTER_LONG || 40.75;
+var MAP_ZOOM = process.env.MAP_ZOOM || 11
+
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/dark-v9',
-    center: [-74.0060, 40.75],
-    zoom: 11
+    center: [MAP_CENTER_LAT, MAP_CENTER_LONG],
+    zoom: MAP_ZOOM
 });
 
 map.on('load', function () {

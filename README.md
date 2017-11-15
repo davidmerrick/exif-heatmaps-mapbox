@@ -12,6 +12,9 @@ Display EXIF data from your photos on a heatmap.
 4. Copy the `.env.example` file to `.env`, and paste in your MapBox token.
 5. Put your EXIF geoJSON in `public/exif.geojson`.
 
+Optionally, you can use the following environment variables to configure starting latitude, longitude, and zoom, respectively:
+MAP_CENTER_LAT, MAP_CENTER_LONG, and MAP_ZOOM.
+
 ## Building
 
 This project is built with NodeJS, WebPack, and Yarn. Make sure you have those installed. 
